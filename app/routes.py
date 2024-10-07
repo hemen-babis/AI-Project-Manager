@@ -123,12 +123,12 @@ def start_project():
 
         # Send emails to team members
         for team_member in team_list:
-            team_email_subject = f"New Project: {project_goal} - Deadline {deadline}"
+            team_email_subject = f"Your Involvement: {project_goal} - Deadline {deadline}"
             team_email_content = f"""
             <h1>Project Update</h1>
             <p>Dear <strong>{team_member['name']}</strong>,</p>
 
-            <p>I hope this message finds you well. I would like to provide you with an update on the project "<strong>{project_goal}</strong>", which we are managing for you. Here are the key updates:</p>
+            <p>We are making progress on the project "<strong>{project_goal}</strong>". Here are the key updates:</p>
 
             <ul>
                 <li><strong>Project Goal:</strong> {project_goal}</li>
@@ -136,9 +136,7 @@ def start_project():
                 <li><strong>Milestones:</strong> {', '.join(milestones)}</li>
             </ul>
 
-            <p>We are pleased with the progress and remain committed to delivering results that meet and exceed your expectations. If you have any questions or would like to discuss any aspect of the project, please feel free to contact me directly.</p>
-
-            <p>Thank you for your trust and partnership. We look forward to continuing to make this project a success for you.</p>
+            <p>Your contribution is crucial for the successful completion of this project. If you have any questions or need support, feel free to reach out.</p>
 
             <p>Best regards,<br>
             <strong>Project Manager</strong><br></p>
@@ -152,7 +150,7 @@ def start_project():
             <h1>Project Update</h1>
             <p>Dear <strong>{client['name']}</strong>,</p>
 
-            <p>We are excited to provide you with an update on the project, "<strong>{project_goal}</strong>". Here are the details you need to be aware of:</p>
+            <p>We are excited to provide you with an update on the project "<strong>{project_goal}</strong>". Here are the current details:</p>
 
             <ul>
                 <li><strong>Project Goal:</strong> {project_goal}</li>
@@ -160,9 +158,7 @@ def start_project():
                 <li><strong>Milestones:</strong> {', '.join(milestones)}</li>
             </ul>
 
-            <p>As a valuable stakeholder, we count on your collaboration to ensure the successful completion of this project. Should you have any questions or require support in any way, please do not hesitate to reach out.</p>
-
-            <p>Looking forward to our continued partnership.</p>
+            <p>We are committed to ensuring the success of this project. If you have any questions or require further clarification, please do not hesitate to reach out.</p>
 
             <p>Best regards,<br>
             <strong>Project Manager</strong><br></p>
