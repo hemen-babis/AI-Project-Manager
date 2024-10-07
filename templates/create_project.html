@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Project Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+        .chat-window {
+            border: 1px solid #ddd;
+            height: 400px;
+            overflow-y: scroll;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        .user-message, .ai-response {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #d1f0f7;
+            text-align: right;
+        }
+        .ai-response {
+            background-color: #f0f0f0;
+            text-align: left;
+        }
+        #chat-container .d-flex {
+            flex-direction: column;
+        }
+        .form-container {
+            margin-bottom: 40px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+        }
+        .alert {
+            display: none;
+        }
+    </style>
+</head>
+<body class="container my-5">
+
+    <!-- Project Form -->
+    <h1 class="mb-4">Create a New Project</h1>
+    
+    <div class="form-container mb-4">
+        <form id="project-form" class="row g-3" enctype="multipart/form-data">
+            <div class="col-md-6">
+                <label for="goal" class="form-label">Project Goal</label>
+                <input type="text" class="form-control" id="goal" name="goal" required>
+            </div>
+
+            <div class="col-md-6">
+                <label for="deadline" class="form-label">Deadline</label>
+                <input type="date" class="form-control" id="deadline" name="deadline" required>
+            </div>
+            
+            <!-- Add Multiple Team Members -->
+            <div class="col-12">
+                <h4>Add Team Members (Manually or via CSV)</h4>
+                <div id="team-members-list" class="mb-3"></div>
+                <button type="button" class="btn btn-secondary mb-3" id="add-team-member">Add Team Member</button>
+                <div class="mb-3">
+                    <label for="team_csv" class="form-label">Or Upload CSV for Large Teams</label>
+                    <input type="file" class="form-control" id="team_csv" name="team_csv" accept=".csv">
+                </div>
+            </div>
+
+            <!-- Add Multiple Clients -->
+            <div class="col-12">
+                <h4>Add Clients (Manually or via CSV)</h4>
+                <div id="client-list" class="mb-3"></div>
+                <button type="button" class="btn btn-secondary mb-3" id="add-client">Add Client</button>
+                <div class="mb-3">
+                    <label for="client_csv" class="form-label">Or Upload CSV for Clients</label>
+                    <input type="file" class="form-control" id="client_csv" name="client_csv" accept=".csv">
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label for="milestones" class="form-label">Milestones (comma separated)</label>
+                <input type="text" class="form-control" id="milestones" name="milestones" placeholder="milestone1, milestone2" required>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Start Project</button>
+            </div>
+        </form>        
+    </div>
+
+    <!-- Chat with AI -->
+    <h2>Chat with AI Project Manager</h2>
+    <div id="chat-container" class="chat-window d-flex flex-column">
+        <!-- Chat messages will appear here -->
+    </div>
+    <form id="chat-form" class="row g-3">
+        <div class="col-md-10">
+            <input type="text" class="form-control" id="question" name="question" placeholder="Ask a project management question..." required>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-success">Ask</button>
+        </div>
+    </form>
+
+    <div id="loading" class="loading">
+        <img src="https://cdn.dribbble.com/users/46309/screenshots/2698853/simple_loading.gif" alt="Loading" style="width: 50px;">
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript for Dynamic Team Members, Clients, and AJAX Submission -->
+    <script>
+        let teamCount = 0;
+        let clientCount = 0;
+
+        // Add team members dynamically
+        document.getElementById('add-team-member').addEventListener('click', function() {
+            teamCount++;
+            const teamDiv = document.createElement('div');
+            teamDiv.classList.add('row', 'mb-2');
+            teamDiv.innerHTML = `
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="team_name_${teamCount}" placeholder="Team Member Name" required>
+                </div>
+                <div class="col-md-6">
+                    <input type="email" class="form-control" name="team_email_${teamCount}" placeholder="Team Member Email" required>
+                </div>
+            `;
+            document.getElementById('team-members-list').appendChild(teamDiv);
+        });
+
+        // Add clients dynamically
+        document.getElementById('add-client').addEventListener('click', function() {
+            clientCount++;
+            const clientDiv = document.createElement('div');
+            clientDiv.classList.add('row', 'mb-2');
+            clientDiv.innerHTML = `
+                <div class="col-md-6">
+                    <input type="text" class="form-control" name="client_name_${clientCount}" placeholder="Client Name" required>
+                </div>
+                <div class="col-md-6">
+                    <input type="email" class="form-control" name="client_email_${clientCount}" placeholder="Client Email" required>
+                </div>
+            `;
+            document.getElementById('client-list').appendChild(clientDiv);
+        });
+
+        // Handle Project Form Submission via AJAX
+        document.getElementById('project-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent normal form submission
+            
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('/start_project', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert('Project created successfully!');
+                } else {
+                    alert('Error creating project. Please try again.');
+                }
+            } catch (error) {
+                alert('Failed to create project.');
+            }
+        });
+
+        // Handle Chat Form Submission via AJAX
+        document.getElementById('chat-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const questionInput = document.getElementById('question');
+            const question = questionInput.value;
+
+            // Add user's question to the chat container
+            const chatContainer = document.getElementById('chat-container');
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('user-message');
+            userMessage.textContent = question;
+            chatContainer.appendChild(userMessage);
+
+            questionInput.value = '';  // Clear input field
+
+            // Show loading indicator
+            document.getElementById('loading').style.display = 'block';
+
+            // Make an AJAX request to the backend
+            const response = await fetch('/ask_ai', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    question: question
+                })
+            });
+
+            const data = await response.json();
+
+            // Hide loading indicator
+            document.getElementById('loading').style.display = 'none';
+
+            // Add AI's response to the chat container
+            const aiResponse = document.createElement('div');
+            aiResponse.classList.add('ai-response');
+            aiResponse.innerHTML = data.answer;  // Use innerHTML for HTML formatting
+            chatContainer.appendChild(aiResponse);
+
+            // Scroll to the bottom of the chat container
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+    </script>
+
+</body>
+</html>
